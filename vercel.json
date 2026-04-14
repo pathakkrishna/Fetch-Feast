@@ -1,0 +1,5 @@
+{
+  "version": 2,
+  "buildCommand": "mkdir -p dist && cp index.html style.css dist/ && cp -r assets dist/ || true && cd meal-planner-react && npm install && npm run build && cp -r dist ../dist/app",
+  "outputDirectory": "dist"
+}
