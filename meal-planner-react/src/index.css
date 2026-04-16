@@ -143,8 +143,8 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
 .hero-content-box { text-align: center; }
 .hero-content-box h2 { font-size: 3rem; margin: 0 0 1rem; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 .hero-content-box p { font-size: 1.2rem; margin: 0 0 2rem; opacity: 0.9; }
-.hero-stats-row { display: flex; justify-content: center; gap: 1rem; }
-.hero-stat-pill { background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.5rem 1rem; border-radius: 50px; font-weight: 500; }
+.hero-stats-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+.hero-stat-pill { background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.5rem 1rem; border-radius: 50px; font-weight: 500; font-size: 0.9rem; text-align: center; }
 
 .serving-selector {
   display: flex;
@@ -226,7 +226,7 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 2rem; }
 
 .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; }
 .day-col { background: #fdfcfcf1; border: 1px solid #f2edf9; border-radius: 18px; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
@@ -373,7 +373,7 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
 .day-tab:hover { box-shadow: 0 8px 20px rgba(156, 175, 151, 0.1); transform: translateY(-2px); }
 .day-tab.active { background: #9caf97; color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(156, 175, 151, 0.3); }
 
-.meal-category-tabs { display: flex; background: white; border-radius: 14px; padding: 0.4rem; gap: 0.4rem; width: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 2.5rem; }
+.meal-category-tabs { display: flex; flex-wrap: wrap; justify-content: center; background: white; border-radius: 14px; padding: 0.4rem; gap: 0.4rem; width: 100%; max-width: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 2.5rem; }
 .meal-tab { border: none; background: transparent; padding: 0.6rem 1.5rem; border-radius: 10px; color: #7a7599; font-weight: 500; cursor: pointer; transition: all 0.3s; }
 .meal-tab.active { background: #fdfcff; color: #1f1a3d; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
@@ -447,18 +447,21 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
 /* Responsive */
 @media (max-width: 960px) {
   .week-grid { grid-template-columns: repeat(3, 1fr); }
-  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px; width: 100%; justify-content: center; margin-top: 0.5rem; }
+  .nav { flex-wrap: wrap; justify-content: center; gap: 1rem; }
   .rlc-header { flex-direction: column; text-align: center; }
   .rlc-body { grid-template-columns: 1fr; gap: 2rem; }
 }
 @media (max-width: 720px) {
   .week-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-premium { padding: 2.5rem 1rem; border-radius: 16px; }
   .hero-content-box h2 { font-size: 2rem; }
-  .filters-row { flex-direction: column; }
-  .recipe-search { max-width: 100%; }
+  .filters-row { flex-direction: column; gap: 0.8rem; }
+  .recipe-search { max-width: 100%; width: 100%; }
   .rlc-footer { text-align: center; }
-  .ai-planner-inputs-wrapper { flex-direction: column; align-items: stretch; }
+  .ai-planner-inputs-wrapper { flex-direction: column; align-items: stretch; gap: 0.8rem; }
   .ai-input-box { width: 100%; }
+  .nav h1 { font-size: 1.5rem; }
 }
 @media (max-width: 480px) {
   .week-grid { grid-template-columns: 1fr; }
@@ -612,7 +615,8 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
 .landing-hero-img {
   width: 100%;
   max-width: 600px;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
   max-height: 100%;
   border-radius: 20px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.08);
