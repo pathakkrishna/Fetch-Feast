@@ -471,12 +471,19 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
    🌟 LANDING VIEW
 ------------------------------------- */
 .landing-page {
-  height: 100vh;
+  min-height: 100vh;
   background: white;
   padding: 0 5%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+}
+
+@media (min-width: 961px) {
+  .landing-page {
+    height: 100vh;
+    overflow: hidden;
+  }
 }
 
 .landing-nav {
@@ -484,6 +491,8 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
   justify-content: space-between;
   align-items: center;
   padding: 2rem 0;
+  position: relative;
+  z-index: 2;
 }
 
 .landing-nav h1 {
@@ -542,6 +551,8 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
 .landing-text {
   flex: 1;
   max-width: 550px;
+  position: relative;
+  z-index: 2;
 }
 .cursive-subtitle {
   font-family: 'Playfair Display', serif;
@@ -709,6 +720,7 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
     text-align: center;
     gap: 1.5rem;
     padding-top: 1rem;
+    padding-bottom: 3rem;
   }
   .landing-actions { justify-content: center; }
   .landing-h1 { font-size: 2.8rem; margin-bottom: 1rem; }
