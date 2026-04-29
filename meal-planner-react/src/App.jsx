@@ -46,7 +46,7 @@ const FloatingDropdown = ({ value, onChange, options, suffix = '', className = '
   );
 };
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner']
 const FILTERS = ['All', 'Veg', 'Non-Veg', 'Vegan']
 
@@ -76,6 +76,26 @@ const parseSpoonacularRecipe = (r, defaultCuisine = "Mix") => {
     else if (r.dishTypes.includes('lunch') || r.dishTypes.includes('salad')) dishType = 'Lunch';
   }
 
+  // Smarter Veg/Vegan check if Spoonacular misses it
+  let finalCategory = 'Non-Veg';
+  if (r.vegan) finalCategory = 'Vegan';
+  else if (r.vegetarian) finalCategory = 'Veg';
+  else {
+    const hasMeat = allIngredients.some(ing => {
+      const a = (ing.aisle || '').toLowerCase();
+      const n = (ing.name || '').toLowerCase();
+      return a.includes('meat') || a.includes('poultry') || a.includes('seafood') || a.includes('fish') || n.includes('chicken') || n.includes('beef') || n.includes('pork') || n.includes('fish') || n.includes('bacon');
+    });
+    const hasDairy = allIngredients.some(ing => {
+      const a = (ing.aisle || '').toLowerCase();
+      const n = (ing.name || '').toLowerCase();
+      return a.includes('dairy') || a.includes('cheese') || a.includes('milk') || n.includes('milk') || n.includes('cheese') || n.includes('yogurt');
+    });
+    
+    if (!hasMeat && !hasDairy) finalCategory = 'Vegan';
+    else if (!hasMeat) finalCategory = 'Veg';
+  }
+
   return {
     id: r.id + Math.floor(Math.random() * 100000), // Ensure unique IDs
     name: r.title,
@@ -84,7 +104,7 @@ const parseSpoonacularRecipe = (r, defaultCuisine = "Mix") => {
     carbs: getNutrient('Carbohydrates') || 40,
     protein: getNutrient('Protein') || 20,
     fat: getNutrient('Fat') || 10,
-    category: r.vegan ? 'Vegan' : r.vegetarian ? 'Veg' : 'Non-Veg',
+    category: finalCategory,
     cuisine: defaultCuisine,
     defaultType: dishType,
     prepTime: r.readyInMinutes ? `${r.readyInMinutes} min` : "30 min",
@@ -139,9 +159,13 @@ function App() {
   const [filter, setFilter] = useState('All')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [sliderDay, setSliderDay] = useState(0)
+  const sliderTrackRef = useRef(null)
+  const touchStartX = useRef(null)
+  const wheelTimeout = useRef(null)
   
   // Recipe Page State
-  const [recDay, setRecDay] = useState('Mon')
+  const [recDay, setRecDay] = useState('Monday')
   const [recType, setRecType] = useState('Breakfast')
   const [recSearch, setRecSearch] = useState('')
   const [recFilter, setRecFilter] = useState('All')
@@ -537,7 +561,6 @@ function App() {
       <div className="landing-page view-animate">
         <nav className="landing-nav">
           <h1><span className="brand-script" style={{color: '#8fa082'}}>Fetch</span><span style={{color: '#e8b63b'}}>Feast</span></h1>
-          <button className="btn-outline-pill" onClick={() => setView('planner')}>Go to Planner</button>
         </nav>
         <main className="landing-main">
           <div className="landing-text">
@@ -555,50 +578,48 @@ function App() {
               <div className="blob blob-2"></div>
             </div>
             <img src="/assets/hero_food_image_1776166832691.png" alt="Healthy bowl" className="landing-hero-img" />
-            <span className="floating-leaf-icon">🌿</span>
-            <span className="floating-berry-icon">🍓</span>
           </div>
         </main>
 
         {/* HOW IT WORKS MODAL */}
         {showHowItWorks && (
           <div className="modal-backdrop" onClick={(e) => { if (e.target.className === 'modal-backdrop') setShowHowItWorks(false) }}>
-            <div className="modal-card" style={{ maxWidth: '600px', textAlign: 'left' }}>
+            <div className="modal-card how-it-works-modal">
               <div className="modal-header">
                 <h3 style={{ fontSize: '1.3rem', color: '#2e2770' }}>How FetchFeast Works</h3>
                 <button className="close-btn" onClick={() => setShowHowItWorks(false)}>×</button>
               </div>
-              <div className="rlc-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem 0' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ background: '#eaf0e9', color: '#53694f', padding: '0.8rem', borderRadius: '12px', fontSize: '1.5rem' }}>📅</div>
+              <div className="how-it-works-steps">
+                <div className="how-step">
+                  <div className="how-step-icon">📅</div>
                   <div>
-                    <h4 style={{ color: '#2e2770', fontSize: '1.1rem', marginBottom: '0.3rem' }}>1. Plan Your Week</h4>
-                    <p style={{ color: '#5d6773', lineHeight: '1.5' }}>Click 'Start Planning' to open your visual weekly calendar. Add curated premium meals directly to breakfast, lunch, or dinner slots across the week.</p>
+                    <h4>1. Plan Your Week</h4>
+                    <p>Click 'Start Planning' to open your visual weekly calendar. Add curated premium meals directly to breakfast, lunch, or dinner slots across the week.</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ background: '#eaf0e9', color: '#53694f', padding: '0.8rem', borderRadius: '12px', fontSize: '1.5rem' }}>✨</div>
+                <div className="how-step">
+                  <div className="how-step-icon">✨</div>
                   <div>
-                    <h4 style={{ color: '#2e2770', fontSize: '1.1rem', marginBottom: '0.3rem' }}>2. AI Recipe Generation</h4>
-                    <p style={{ color: '#5d6773', lineHeight: '1.5' }}>Got leftover ingredients? Enter them into the AI Generator at the bottom of the planner, and our AI will instantly cook up 4 bespoke recipes just for you.</p>
+                    <h4>2. AI Recipe Generation</h4>
+                    <p>Got leftover ingredients? Enter them into the AI Generator at the bottom of the planner, and our AI will instantly cook up 4 bespoke recipes just for you.</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ background: '#eaf0e9', color: '#53694f', padding: '0.8rem', borderRadius: '12px', fontSize: '1.5rem' }}>🛒</div>
+                <div className="how-step">
+                  <div className="how-step-icon">🛒</div>
                   <div>
-                    <h4 style={{ color: '#2e2770', fontSize: '1.1rem', marginBottom: '0.3rem' }}>3. Auto-Grocery List</h4>
-                    <p style={{ color: '#5d6773', lineHeight: '1.5' }}>Switch to the Grocery tab to see everything you need for the week automatically categorized and tallied up. Mark items you already have to keep your cart clean.</p>
+                    <h4>3. Auto-Grocery List</h4>
+                    <p>Switch to the Grocery tab to see everything you need for the week automatically categorized and tallied up. Mark items you already have to keep your cart clean.</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ background: '#eaf0e9', color: '#53694f', padding: '0.8rem', borderRadius: '12px', fontSize: '1.5rem' }}>📊</div>
+                <div className="how-step">
+                  <div className="how-step-icon">📊</div>
                   <div>
-                    <h4 style={{ color: '#2e2770', fontSize: '1.1rem', marginBottom: '0.3rem' }}>4. Macrorganize Your Life</h4>
-                    <p style={{ color: '#5d6773', lineHeight: '1.5' }}>Hit the Nutrition tab to see a breakdown of your daily caloric intake and weekly protein hits based on what you scheduled. No more guesswork.</p>
+                    <h4>4. Macrorganize Your Life</h4>
+                    <p>Hit the Nutrition tab to see a breakdown of your daily caloric intake and weekly protein hits based on what you scheduled. No more guesswork.</p>
                   </div>
                 </div>
               </div>
-              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', paddingBottom: '0.5rem' }}>
+              <div className="how-it-works-footer">
                 <button className="btn-solid-pill" onClick={() => { setShowHowItWorks(false); setView('planner'); }}>Start Planning Now</button>
               </div>
             </div>
@@ -654,41 +675,82 @@ function App() {
               <button className="btn btn-secondary shadow-hover" onClick={() => setPlan({})}>Clear week</button>
             </div>
             
-            <div className="week-grid">
-              {DAYS.map((day, di) => (
-                <div className="day-col" key={day}>
-                  <div className="day-head">{day}</div>
-                  <div className="day-slots">
-                    {MEAL_TYPES.map((type, ti) => {
-                      const slot = `${di}-${ti}`
-                      const mealIds = Array.isArray(plan[slot]) ? plan[slot] : (plan[slot] ? [plan[slot]] : [])
-                      const mealsInSlot = mealIds.map(mealById).filter(Boolean)
-                      return (
-                        <div className="slot" key={slot} onClick={() => { setSearch(''); setOpenSlot(slot); }}>
-                          <span className="slot-type">{type}</span>
-                          {mealsInSlot.length > 0 ? (
-                            <div className="slot-content-multi">
-                              {mealsInSlot.map(m => (
-                                <div className="slot-content" key={m.id}>
-                                  <img src={m.image} alt="" className="slot-img"/>
-                                  <div className="slot-text">
-                                    <strong>{m.name}</strong>
-                                    <small>{m.cal} kcal</small>
-                                  </div>
-                                  <button className="slot-remove" onClick={(e) => { e.stopPropagation(); removeMeal(slot, m.id) }}>×</button>
+            <div className="week-slider-section">
+              <div
+                className="week-slider-track"
+                ref={sliderTrackRef}
+                onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  if (touchStartX.current === null) return;
+                  const diff = touchStartX.current - e.changedTouches[0].clientX;
+                  if (diff > 50) setSliderDay(d => Math.min(6, d + 1));
+                  else if (diff < -50) setSliderDay(d => Math.max(0, d - 1));
+                  touchStartX.current = null;
+                }}
+                onWheel={(e) => {
+                  if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || Math.abs(e.deltaY) > 10) {
+                    e.preventDefault();
+                    clearTimeout(wheelTimeout.current);
+                    wheelTimeout.current = setTimeout(() => {
+                      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+                      if (delta > 0) setSliderDay(d => Math.min(6, d + 1));
+                      else if (delta < 0) setSliderDay(d => Math.max(0, d - 1));
+                    }, 50);
+                  }
+                }}
+              >
+                <div className="week-slider-inner" style={{ transform: `translateX(calc(-${sliderDay} * (88% + 1rem)))` }}>
+                  {DAYS.map((day, di) => (
+                    <div className="day-col" key={day}>
+                      <div className="day-head">{day}</div>
+                      <div className="day-slots">
+                        {MEAL_TYPES.map((type, ti) => {
+                          const slot = `${di}-${ti}`
+                          const mealIds = Array.isArray(plan[slot]) ? plan[slot] : (plan[slot] ? [plan[slot]] : [])
+                          const mealsInSlot = mealIds.map(mealById).filter(Boolean)
+                          return (
+                            <div className="slot" key={slot} onClick={() => { setSearch(''); setOpenSlot(slot); }}>
+                              <span className="slot-type">{type}</span>
+                              {mealsInSlot.length > 0 ? (
+                                <div className="slot-content-multi">
+                                  {mealsInSlot.map(m => (
+                                    <div className="slot-content" key={m.id}>
+                                      <img src={m.image} alt="" className="slot-img"/>
+                                      <div className="slot-text">
+                                        <strong>{m.name}</strong>
+                                        <small>{m.cal} kcal</small>
+                                      </div>
+                                      <button className="slot-remove" onClick={(e) => { e.stopPropagation(); removeMeal(slot, m.id) }}>×</button>
+                                    </div>
+                                  ))}
+                                  <div className="slot-add-more" onClick={(e) => { e.stopPropagation(); setSearch(''); setOpenSlot(slot); }}>+ Add another</div>
                                 </div>
-                              ))}
-                              <div className="slot-add-more" onClick={(e) => { e.stopPropagation(); setSearch(''); setOpenSlot(slot); }}>+ Add another</div>
+                              ) : (
+                                <div className="slot-empty">+ Add Meal</div>
+                              )}
                             </div>
-                          ) : (
-                            <div className="slot-empty">+ Add Meal</div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div className="slider-controls">
+                <div className="slider-dots">
+                  {DAYS.map((day, i) => (
+                    <button key={day} className={`slider-dot ${i === sliderDay ? 'active' : ''}`} onClick={() => setSliderDay(i)} />
+                  ))}
+                </div>
+                <div className="slider-arrows">
+                  <button className="slider-arrow" onClick={() => setSliderDay(d => Math.max(0, d - 1))} disabled={sliderDay === 0}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button className="slider-arrow" onClick={() => setSliderDay(d => Math.min(6, d + 1))} disabled={sliderDay === 6}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -819,7 +881,7 @@ function App() {
                                       <li key={idx}>
                                           <span className="ing-icon">{ing.icon}</span> 
                                           <span className="ing-name">{ing.name}</span>
-                                          <span className="ing-qty">{ing.qty * servingSize} {ing.unit}</span>
+                                          <span className="ing-qty">{fmtQty(ing.qty * servingSize, ing.unit)}</span>
                                       </li>
                                   ))}
                               </ul>
@@ -842,42 +904,37 @@ function App() {
              </div>
           )}
 
-          <div className="browse-recipes-container" style={{marginTop: plannedMealsInSlot.length > 0 ? '2rem' : '0'}}>
-             {plannedMealsInSlot.length > 0 && <h3 className="section-heading" style={{marginBottom: '1rem'}}>Add More to {recType}</h3>}
-             <div className="filters-row">
-               <input value={recSearch} onChange={(e) => setRecSearch(e.target.value)} placeholder="Search recipes..." className="recipe-search" />
-               <select value={recFilter} onChange={(e) => setRecFilter(e.target.value)} className="recipe-filter">
-                 {FILTERS.map((f) => <option key={f} value={f}>{f}</option>)}
-               </select>
-             </div>
-
-             <div className="recipes-grid">
-               {visibleRecipes.map(recipe => (
-                 <div key={recipe.id} className="recipe-card" onClick={() => setActiveRecipe(recipe)}>
-                   <div className="recipe-img-box">
-                     <img src={recipe.image} alt={recipe.name} className="floating-food" />
-                   </div>
-                   <div className="recipe-info">
-                     <div className="recipe-header">
-                         <h3>{recipe.name}</h3>
-                         <span className="recipe-tag">{recipe.category}</span>
-                     </div>
-                     <div className="recipe-meta">
-                       <span>🔥 {recipe.cal} kcal</span>
-                       <span>⏱️ {recipe.prepTime}</span>
-                     </div>
-                   </div>
-                 </div>
-               ))}
-               {visibleRecipes.length === 0 && (
-                   <div className="empty-state">
-                       <div className="empty-illustration">🔍</div>
-                       <h3>{isSearching ? "Searching recipes..." : "No recipes found"}</h3>
-                       <p>{isSearching ? "Just a moment..." : "Try adjusting your search or filters."}</p>
-                   </div>
-               )}
-             </div>
-          </div>
+          {/* SUGGESTED RECIPES (CHANGES DAILY) */}
+          {fetchedMeals.length >= 4 && !recSearch && (
+            <div className="suggested-recipes-container" style={{marginTop: '2rem'}}>
+              <h3 className="section-heading" style={{marginBottom: '1rem'}}>✨ Suggested For You (Daily Picks)</h3>
+              <div className="recipes-grid">
+                {[...fetchedMeals]
+                  .sort((a, b) => {
+                    const seed = new Date().getDate() + new Date().getMonth() * 31;
+                    return ((a.id * seed) % 100) - ((b.id * seed) % 100);
+                  })
+                  .slice(0, 4)
+                  .map(recipe => (
+                    <div key={recipe.id} className="recipe-card" onClick={() => setActiveRecipe(recipe)}>
+                      <div className="recipe-img-box">
+                        <img src={recipe.image} alt={recipe.name} className="floating-food" />
+                      </div>
+                      <div className="recipe-info">
+                        <div className="recipe-header">
+                            <h3>{recipe.name}</h3>
+                            <span className="recipe-tag">{recipe.category}</span>
+                        </div>
+                        <div className="recipe-meta">
+                          <span>🔥 {recipe.cal} kcal</span>
+                          <span>⏱️ {recipe.prepTime}</span>
+                        </div>
+                      </div>
+                    </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -1033,10 +1090,22 @@ function App() {
                   </div>
               </div>
               <div className="rlc-body" style={{ marginTop: '2rem', gap: '3rem', display: 'block' }}>
+                  <div className="rm-section" style={{ marginBottom: '2rem' }}>
+                      <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: '#4a4563' }}>Ingredients (for {servingSize})</h3>
+                      <ul className="rm-ingredients" style={{ padding: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem', color: '#5d6773', fontSize: '1.05rem' }}>
+                          {activeRecipe.ingredients?.map((ing, idx) => (
+                              <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                  <span className="ing-icon" style={{ fontSize: '1.2rem' }}>{ing.icon}</span> 
+                                  <span className="ing-name" style={{ flex: 1, fontWeight: '500' }}>{ing.name}</span>
+                                  <span className="ing-qty" style={{ fontWeight: '600', color: '#2e2770' }}>{fmtQty(ing.qty * servingSize, ing.unit)}</span>
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
                   <div className="rm-section">
                       <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: '#4a4563' }}>Instructions</h3>
                       <ol className="rm-instructions" style={{ paddingLeft: '1.2rem', color: '#5d6773', display: 'flex', flexDirection: 'column', gap: '1.2rem', lineHeight: '1.8', fontSize: '1.05rem' }}>
-                          {activeRecipe.instructions.map((step, idx) => (
+                          {activeRecipe.instructions?.map((step, idx) => (
                               <li key={idx}>{step}</li>
                           ))}
                       </ol>
