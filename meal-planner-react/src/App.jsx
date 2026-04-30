@@ -122,7 +122,7 @@ const parseSpoonacularRecipe = (r, defaultCuisine = "Mix") => {
 
 const FALLBACK_DB = [
   { id: 1, name: 'Avocado Toast', emoji: '🥑', cal: 320, carbs: 38, protein: 9, fat: 16, category: 'Veg', cuisine: 'Western', defaultType: 'Breakfast', prepTime: '10 min', image: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=500&h=500&fit=crop', ingredients: [{ name: 'Bread', qty: 2, unit: 'slices', cat: 'Grains', icon: '🍞' }, { name: 'Avocado', qty: 1, unit: 'pc', cat: 'Vegetables', icon: '🥑' }], instructions: ['Toast the bread until golden brown.', 'Mash the avocado with a fork.', 'Spread the mashed avocado over the toasted bread and season with salt.'] },
-  { id: 2, name: 'Greek Yogurt Bowl', emoji: '🫙', cal: 280, carbs: 32, protein: 18, fat: 8, category: 'Veg', cuisine: 'Mediterranean', defaultType: 'Breakfast', prepTime: '5 min', image: 'https://images.unsplash.com/photo-1517093763785-520c483988fb?w=500&h=500&fit=crop', ingredients: [{ name: 'Greek yogurt', qty: 200, unit: 'g', cat: 'Dairy', icon: '🥛' }, { name: 'Berries', qty: 80, unit: 'g', cat: 'Others', icon: '🍓' }], instructions: ['Scoop greek yogurt into a bowl.', 'Wash and dry the berries.', 'Top the yogurt with berries and drizzle with honey if desired.'] },
+  { id: 2, name: 'Greek Yogurt Bowl', emoji: '🫙', cal: 280, carbs: 32, protein: 18, fat: 8, category: 'Veg', cuisine: 'Mediterranean', defaultType: 'Breakfast', prepTime: '5 min', image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&h=500&fit=crop', ingredients: [{ name: 'Greek yogurt', qty: 200, unit: 'g', cat: 'Dairy', icon: '🥛' }, { name: 'Berries', qty: 80, unit: 'g', cat: 'Others', icon: '🍓' }], instructions: ['Scoop greek yogurt into a bowl.', 'Wash and dry the berries.', 'Top the yogurt with berries and drizzle with honey if desired.'] },
   { id: 3, name: 'Chicken Rice Bowl', emoji: '🍚', cal: 520, carbs: 58, protein: 38, fat: 12, category: 'Non-Veg', cuisine: 'Asian', defaultType: 'Lunch', prepTime: '20 min', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=500&fit=crop', ingredients: [{ name: 'Chicken breast', qty: 150, unit: 'g', cat: 'Others', icon: '🍗' }, { name: 'Rice', qty: 100, unit: 'g', cat: 'Grains', icon: '🍚' }, { name: 'Broccoli', qty: 100, unit: 'g', cat: 'Vegetables', icon: '🥦' }], instructions: ['Cook the rice according to package instructions.', 'Grill or pan-fry the chicken breast.', 'Steam the broccoli.', 'Assemble the bowl and add your favorite sauce.'] },
   { id: 4, name: 'Veggie Wrap', emoji: '🌯', cal: 420, carbs: 52, protein: 14, fat: 16, category: 'Vegan', cuisine: 'Mexican', defaultType: 'Lunch', prepTime: '10 min', image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&h=500&fit=crop', ingredients: [{ name: 'Tortilla', qty: 2, unit: 'pc', cat: 'Grains', icon: '🌮' }, { name: 'Bell pepper', qty: 1, unit: 'pc', cat: 'Vegetables', icon: '🫑' }], instructions: ['Slice the bell pepper.', 'Lay out the tortilla and spread hummus or sauce.', 'Add the veggies and wrap tightly.'] },
   { id: 5, name: 'Salmon & Veggies', emoji: '🐟', cal: 560, carbs: 20, protein: 44, fat: 28, category: 'Non-Veg', cuisine: 'Nordic', defaultType: 'Dinner', prepTime: '25 min', image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=500&h=500&fit=crop', ingredients: [{ name: 'Salmon fillet', qty: 200, unit: 'g', cat: 'Others', icon: '🐟' }, { name: 'Spinach', qty: 100, unit: 'g', cat: 'Vegetables', icon: '🥬' }], instructions: ['Preheat oven to 400°F (200°C).', 'Season the salmon and place on a baking sheet.', 'Roast for 12-15 minutes.', 'Sauté spinach lightly and serve alongside the salmon.'] },
@@ -169,6 +169,14 @@ function App() {
   const [recType, setRecType] = useState('Breakfast')
   const [recSearch, setRecSearch] = useState('')
   const [recFilter, setRecFilter] = useState('All')
+
+  const recipesSliderRef = useRef(null)
+  const scrollRecipes = (dir) => {
+    if (recipesSliderRef.current) {
+      const scrollAmt = recipesSliderRef.current.offsetWidth * 0.9;
+      recipesSliderRef.current.scrollBy({ left: dir * scrollAmt, behavior: 'smooth' });
+    }
+  }
 
   // AI State
   const [ingredientHint, setIngredientHint] = useState('')
@@ -807,7 +815,7 @@ function App() {
                       <div className="recipe-info">
                         <div className="recipe-header">
                             <h3>{recipe.name}</h3>
-                            <span className="recipe-tag">{recipe.category}</span>
+                            <span className={`recipe-tag diet-${recipe.category.toLowerCase()}`}>{ recipe.category === "Vegan" ? "🌱 Vegan" : recipe.category }</span>
                         </div>
                         <div className="recipe-meta">
                           <span>🔥 {recipe.cal} kcal</span>
@@ -856,15 +864,16 @@ function App() {
           </div>
 
           {plannedMealsInSlot.length > 0 && (
-             <div className="planned-meals-list">
-               {plannedMealsInSlot.map(pm => (
-                 <div key={pm.id} className="planned-meal-container" style={{marginBottom: '2rem'}}>
+             <div className="recipes-slider-wrapper">
+               <div className="planned-meals-list" ref={recipesSliderRef}>
+                 {plannedMealsInSlot.map(pm => (
+                 <div key={pm.id} className="planned-meal-container">
                     <div className="planned-badge">★ Scheduled for {recDay} {recType}</div>
                     <div className="recipe-large-card premium-card">
                       <div className="rlc-header">
                           <img src={pm.image} alt={pm.name} className="rlc-img"/>
                           <div className="rlc-title-box">
-                              <span className="rm-tag">{pm.category}</span>
+                              <span className={`rm-tag diet-${pm.category.toLowerCase()}`}>{ pm.category === "Vegan" ? "🌱 Vegan" : pm.category }</span>
                               <h2 className="recipe-h2-title">{pm.name}</h2>
                               <div className="rm-meta">
                                   <span>🔥 {pm.cal} kcal</span>
@@ -902,6 +911,19 @@ function App() {
                  </div>
                ))}
              </div>
+             {plannedMealsInSlot.length > 1 && (
+               <div className="slider-controls" style={{marginTop: '0.5rem', justifyContent: 'flex-start'}}>
+                 <div className="slider-arrows">
+                   <button className="slider-arrow" onClick={() => scrollRecipes(-1)}>
+                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                   </button>
+                   <button className="slider-arrow" onClick={() => scrollRecipes(1)}>
+                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                   </button>
+                 </div>
+               </div>
+             )}
+           </div>
           )}
 
           {/* SUGGESTED RECIPES (CHANGES DAILY) */}
@@ -923,7 +945,7 @@ function App() {
                       <div className="recipe-info">
                         <div className="recipe-header">
                             <h3>{recipe.name}</h3>
-                            <span className="recipe-tag">{recipe.category}</span>
+                            <span className={`recipe-tag diet-${recipe.category.toLowerCase()}`}>{ recipe.category === "Vegan" ? "🌱 Vegan" : recipe.category }</span>
                         </div>
                         <div className="recipe-meta">
                           <span>🔥 {recipe.cal} kcal</span>
@@ -1020,7 +1042,7 @@ function App() {
                   const pct = Math.min(100, Math.round((dayCalories[i] / 2200) * 100));
                   return (
                     <div className="bar-row" key={d}>
-                      <span className="bar-label">{d}</span>
+                      <span className="bar-label">{d.substring(0, 3)}</span>
                       <div className="bar-track">
                         <div className="bar-fill" style={{ width: `${pct}%`, background: `#9caf97` }}></div>
                       </div>
